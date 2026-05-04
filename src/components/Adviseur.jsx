@@ -13,7 +13,54 @@ const SUGGESTIONS = [
 
 const FALLBACK = 'Dat is een goede vraag die ik graag beantwoord op basis van uw specifieke installatie. Op dit moment is de meest urgente actie het instellen van dynamische laadsturing — dit heeft de snelste impact op uw aansluitingsprobleem. Wilt u daar meer over weten, of heeft u een andere vraag?';
 
-const OPENING = 'Goedemiddag. Ik heb uw EMS-data van de afgelopen week geanalyseerd. Uw aansluiting bereikte dinsdag een piek van 16.8 kW — dat is 99% van uw aansluitcapaciteit. Er zijn twee maatregelen die u direct kunt nemen. Wat wilt u weten?';
+const OPENING = 'Goedemiddag. Ik heb uw EMS-data van de afgelopen week geanalyseerd. Uw aansluiting bereikte dinsdag een piek van 81.4 kW — dat is 95% van uw aansluitcapaciteit van 86 kW. Gezien uw nominale vermogen boven 70 kW bent u ook GACS-plichtig. Er zijn directe maatregelen mogelijk. Wat wilt u weten?';
+
+const STOPLICHT_ROOD  = { kleur: 'rood',  dot: '🔴', label: 'Niet nu adviseerbaar' };
+const STOPLICHT_ORANJE = { kleur: 'oranje', dot: '🟡', label: 'Nader onderzoek vereist' };
+const STOPLICHT_GROEN  = { kleur: 'groen', dot: '🟢', label: 'Direct uitvoerbaar' };
+
+function bepaalStoplicht(tekst) {
+  const t = tekst.toLowerCase();
+  const roodSignalen = [
+    'niet verantwoord', 'niet mogelijk', 'niet aan te raden',
+    'overschrijdt', 'risico', 'gevaar', 'onmiddellijk stoppen',
+  ];
+  const groenSignalen = [
+    'direct uitvoerbaar', 'direct realiseerbaar', 'softwarematig',
+    'geen hardware', 'geen nieuwe hardware', 'geen investering',
+    'binnen één dag', 'direct in te stellen',
+  ];
+  if (roodSignalen.some(s => t.includes(s))) return STOPLICHT_ROOD;
+  if (groenSignalen.some(s => t.includes(s))) return STOPLICHT_GROEN;
+  return STOPLICHT_ORANJE;
+}
+
+function StoplichtBadge({ tekst }) {
+  const { dot, label, kleur } = bepaalStoplicht(tekst);
+  const kleuren = {
+    groen:  { bg: '#F0FBF4', border: '#2DBB63', color: '#1A7A3C' },
+    oranje: { bg: '#FFF8F0', border: '#E07C00', color: '#B05A00' },
+    rood:   { bg: '#FEF2F2', border: '#D93025', color: '#C0392B' },
+  };
+  const stijl = kleuren[kleur];
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 5,
+      marginTop: 5,
+      padding: '3px 10px',
+      borderRadius: 12,
+      border: `1px solid ${stijl.border}`,
+      background: stijl.bg,
+      color: stijl.color,
+      fontSize: 11,
+      fontWeight: 600,
+    }}>
+      {dot} {label}
+    </div>
+  );
+}
 
 function getMockResponse(input) {
   const lower = input.toLowerCase();
@@ -136,6 +183,9 @@ export default function Adviseur() {
         {messages.map((msg, i) => (
           <div key={i} className={`message ${msg.role}`}>
             <div className="message-bubble">{msg.content}</div>
+            {msg.role === 'assistant' && i > 0 && (
+              <StoplichtBadge tekst={msg.content} />
+            )}
             <div className="message-time">{formatTime(msg.time)}</div>
           </div>
         ))}
