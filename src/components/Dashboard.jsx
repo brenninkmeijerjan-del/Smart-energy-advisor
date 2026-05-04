@@ -100,7 +100,8 @@ export default function Dashboard() {
                 axisLine={false}
               />
               <YAxis
-                domain={[0, 20]}
+                domain={[0, 100]}
+                ticks={[0, 20, 40, 60, 80, 100]}
                 tick={{ fontSize: 10, fill: '#5A6779' }}
                 tickLine={false}
                 axisLine={false}
